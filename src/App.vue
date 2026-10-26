@@ -54,7 +54,7 @@
 		<ConfirmModal :visible="modals.deleteNote" :title="$t('confirm.deleteNoteTitle')" :text="deleteNoteText"
 			:loading="actionLoading" @confirm="confirmDeleteNote" @close="closeModal('deleteNote')" />
 		<PasswordModal :visible="modals.password" :mode="passwordModalMode" :loading="passwordLoading"
-			@save="onPasswordConfirm" @close="closeModal('password')" />
+			@save="onPasswordConfirm" @close="onPasswordModalClose" />
 		<MoveNoteModal :visible="modals.moveNote" :notebooks="state.notebooks" :current-folder-id="moveNoteFolderId"
 			:loading="actionLoading" @save="confirmMoveNote" @close="closeModal('moveNote')" />
 		<TrashModal :visible="modals.trash" :items="trashItems" :total="trashTotalOnChain" :state="state"
@@ -119,6 +119,9 @@ export default {
 
 			/* 连接状态：disconnected | connecting | connected */
 			connection: 'disconnected',
+
+			/* 是否已解锁；未解锁不得进入主应用 */
+			unlocked: false,
 
 			/* 链上服务实例（非响应式） */
 			chain: new BscNote(),
@@ -208,7 +211,7 @@ export default {
 	computed: {
 		/* 已解锁（连接钱包 + 输入/创建密码成功）才显示主应用 */
 		isAppOnline() {
-			return this.connection === 'connected'
+			return this.connection === 'connected' && this.unlocked
 		},
 		trashCount() {
 			return this.trashTotalOnChain
@@ -301,12 +304,14 @@ export default {
 		async handleConnect(provider) {
 			if (this.connection === 'connecting') return
 			this.connection = 'connecting'
+			this.unlocked = false
 			try {
 				await this.chain.connect(provider)
 				this.connection = 'connected'
 				await this.unlock()
 			} catch (e) {
 				this.connection = 'disconnected'
+				this.unlocked = false
 				await this.chain.disconnect()
 				if (e.message === 'NO_WALLET') this.showToast(this.$t('toast.walletMissing'))
 				else if (e.message === 'WRONG_NETWORK') this.showToast(this.$t('toast.wrongNetwork'))
@@ -317,6 +322,7 @@ export default {
 		async handleDisconnect() {
 			await this.chain.disconnect()
 			this.connection = 'disconnected'
+			this.unlocked = false
 			this.state = initialState()
 			this.view = { type: 'all' }
 			this.lockOpen = false
@@ -337,8 +343,18 @@ export default {
 				this.openModal('password')
 			} catch (e) {
 				console.error(e)
-				this.showToast(this.$t('toast.passwordWrong'))
+				// 读取信封失败：masterKey 为空，无法进入应用，直接断开回到连接页
+				await this.handleDisconnect()
 			}
+		},
+
+		/* 密码弹窗关闭（取消 / 点遮罩 / 关闭按钮）
+		   create / input 阶段取消 = 未解锁，masterKey 为空，不能停留在应用内 → 断开连接回连接页 */
+		async onPasswordModalClose() {
+			if (this.passwordLoading) return
+			const needUnlock = this.passwordModalMode === 'create' || this.passwordModalMode === 'input'
+			this.closeModal('password')
+			if (needUnlock) await this.handleDisconnect()
 		},
 
 		/* 密码弹窗确认（create / input / modify 三态） */
@@ -347,9 +363,11 @@ export default {
 			try {
 				if (this.passwordModalMode === 'create') {
 					await this.chain.createPassword(payload.newPassword)
+					this.unlocked = true
 					this.showToast(this.$t('toast.passwordCreated'))
 				} else if (this.passwordModalMode === 'input') {
 					await this.chain.inputPassword(payload.password)
+					this.unlocked = true
 					this.showToast(this.$t('toast.unlockSuccess'))
 				} else {
 					// modify
@@ -651,6 +669,7 @@ export default {
 		},
 		lock() {
 			this.chain.masterKey = null
+			this.unlocked = false
 			this.state = initialState()
 			this.view = { type: 'all' }
 			this.lockOpen = true
@@ -661,6 +680,7 @@ export default {
 			this.passwordLoading = true
 			try {
 				await this.chain.inputPassword(password)
+				this.unlocked = true
 				this.lockOpen = false
 				this.showToast(this.$t('toast.unlockSuccess'))
 				await this.loadFolders()
