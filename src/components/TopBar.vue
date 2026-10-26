@@ -20,12 +20,12 @@
 		</div>
 
 		<div class="topbar-right">
-			<div class="conn-group" aria-live="polite">
+			<div v-if="online" class="conn-group" aria-live="polite">
 				<span class="conn-dot" :class="connection"></span>
 				<span class="conn-text">{{ connText }}</span>
 			</div>
-			<button class="btn-text" :data-tip="$t('topbar.disconnect')"
-				:disabled="!online || connection !== 'connected'" @click="$emit('disconnect')">
+			<button v-if="online" class="btn-text" :data-tip="$t('topbar.disconnect')"
+				:disabled="connection !== 'connected'" @click="$emit('disconnect')">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
 					stroke-linejoin="round">
 					<path d="M13.5 10.5 15.9 8.1a3.9 3.9 0 0 1 5.5 5.5l-2.4 2.4"></path>
@@ -37,8 +37,8 @@
 				</svg>
 				<span class="btn-label">{{ $t('topbar.disconnect') }}</span>
 			</button>
-			<span class="topbar-divider"></span>
-			<button class="icon-btn" :data-tip="$t('topbar.trash')" :aria-label="$t('topbar.trash')" :disabled="!online"
+			<span v-if="online" class="topbar-divider"></span>
+			<button v-if="online" class="icon-btn" :data-tip="$t('topbar.trash')" :aria-label="$t('topbar.trash')"
 				@click="$emit('open-trash')">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
 					stroke-linejoin="round">
@@ -54,8 +54,8 @@
 			<LangSwitcher />
 			<!-- 主题切换（深色/浅色） -->
 			<ThemeSwitcher />
-			<button class="icon-btn" :data-tip="$t('topbar.changePassword')" :aria-label="$t('topbar.changePassword')"
-				:disabled="!online" @click="$emit('open-password')">
+			<button v-if="online" class="icon-btn" :data-tip="$t('topbar.changePassword')"
+				:aria-label="$t('topbar.changePassword')" @click="$emit('open-password')">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
 					stroke-linejoin="round">
 					<path
@@ -63,8 +63,8 @@
 					</path>
 				</svg>
 			</button>
-			<button class="icon-btn tip-left" :data-tip="$t('topbar.lock')" :aria-label="$t('topbar.lock')"
-				:disabled="!online" @click="$emit('lock')">
+			<button v-if="online" class="icon-btn tip-left" :data-tip="$t('topbar.lock')" :aria-label="$t('topbar.lock')"
+				@click="$emit('lock')">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
 					stroke-linejoin="round">
 					<rect x="3" y="11" width="18" height="11" rx="2"></rect>
