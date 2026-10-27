@@ -49,8 +49,13 @@ export class BscNote {
     if (!ethProvider) {
       throw new Error('NO_WALLET')
     }
+
+    //step 1
+    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' })
+    this.account = accounts[0]
+
+    //step 2
     try {
-      // 1. Change to BSC
       await ethProvider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x38' }],
@@ -80,11 +85,7 @@ export class BscNote {
       }
     }
 
-    const accounts = await ethProvider.request({ method: 'eth_requestAccounts' })
-    this.account = accounts[0]
     this.provider = new ethers.BrowserProvider(ethProvider)
-    this.signer = await this.provider.getSigner()
-
     const network = await this.provider.getNetwork()
     const chainId = Number(network.chainId)
     if (chainId !== 56) {
@@ -98,6 +99,10 @@ export class BscNote {
       throw new Error('WRONG_NETWORK')
     }
 
+    //step 3
+    this.signer = await this.provider.getSigner()
+
+    //step 4
     this.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, this.signer)
 
     // 监听账户/链变化
