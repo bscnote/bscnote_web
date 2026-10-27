@@ -100,7 +100,7 @@ export default {
 		total: { type: Number, default: 0 }, // 回收站总数（链上返回）
 		state: { type: Object, required: true },
 		page: { type: Number, default: 1 },
-		pageSize: { type: Number, default: 10 },
+		pageSize: { type: Number, default: 30 },
 		sort: { type: String, default: 'created-desc' },
 		loadingId: { type: Number, default: null } // 正在恢复中的笔记 id
 	},

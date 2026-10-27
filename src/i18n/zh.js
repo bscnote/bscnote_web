@@ -42,7 +42,9 @@ export default {
     delete: '删除',
     uncategorized: '未分类',
     empty: '这里还没有笔记',
-    emptyAction: '新建第一条笔记'
+    emptyAction: '新建第一条笔记',
+    createdAt: '创建于',
+    updatedAt: '最后更新于'
   },
   notebookModal: {
     createTitle: '新建笔记本',

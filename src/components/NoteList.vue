@@ -43,35 +43,33 @@
 		<div v-show="notes.length > 0" class="note-list">
 			<div v-for="(n, i) in notes" :key="n.id" class="note-card"
 				:style="{ animationDelay: Math.min(i * 25, 200) + 'ms' }">
-				<span class="col-id">{{ formatNo(n.id) }}</span>
-				<!-- 内容列：默认展示内容，单行溢出省略；溢出时可点击弹出全文浮层 -->
-				<span :ref="'content-' + n.id" class="col-content" :class="{ 'is-overflow': !!overflowMap[n.id] }"
-					@click="onContentClick(n, $event)">
-					<template v-for="(seg, si) in segments(n.content)"><span v-if="seg.hit" :key="si" class="hl">{{
-						seg.text }}</span><template v-else>{{ seg.text }}</template></template>
-				</span>
-				<span class="col-nb" :class="{ uncat: isDefaultFolder(n.folderId) }" :data-tip="$t('noteModal.moveTitle')"
-					@click="$emit('move-note', n.id)">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-						stroke-linejoin="round">
-						<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-					</svg>
-					<span class="nb-name">{{ isDefaultFolder(n.folderId) ? $t('noteList.uncategorized') :
-						notebookName(n.folderId) }}</span>
-				</span>
-				<span class="col-created">{{ formatTime(n.createdAt) }}</span>
-				<span class="col-updated">{{ formatTime(n.updatedAt) }}</span>
-				<span class="col-ops">
-					<button class="icon-btn" :data-tip="$t('noteList.edit')" :aria-label="$t('noteList.edit')"
+				<div class="note-item-main">
+					<div :ref="'content-' + n.id" class="note-item-title" :class="{ 'is-overflow': !!overflowMap[n.id] }"
+						:title="n.content" @click="onContentClick(n, $event)">
+						<template v-for="(seg, si) in segments(n.content)"><span v-if="seg.hit" :key="si"
+								class="hl">{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template>
+					</div>
+					<div class="note-item-meta">
+						{{ formatNo(n.id) }} ·
+						<span class="note-meta-nb" :data-tip="$t('noteModal.moveTitle')"
+							@click="$emit('move-note', n.id)">{{ notebookName(n.folderId) }}</span>
+						· {{ $t('noteList.createdAt') }} {{ formatTime(n.createdAt) }}<template
+							v-if="n.updatedAt !== n.createdAt"> ·
+							{{ $t('noteList.updatedAt') }} {{ formatTime(n.updatedAt) }}</template>
+					</div>
+				</div>
+				<div class="col-ops">
+					<button class="btn btn-ghost btn-op" :aria-label="$t('noteList.edit')"
 						@click="$emit('edit-note', n.id)">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 							stroke-linecap="round" stroke-linejoin="round">
 							<path d="M12 20h9" />
 							<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
 						</svg>
+						{{ $t('noteList.edit') }}
 					</button>
-					<button class="icon-btn danger" :data-tip="$t('noteList.delete')" :aria-label="$t('noteList.delete')"
-						@click="$emit('delete-note', n.id)">
+					<button class="btn btn-ghost btn-op danger" 
+						:aria-label="$t('noteList.delete')" @click="$emit('delete-note', n.id)">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 							stroke-linecap="round" stroke-linejoin="round">
 							<path d="M3 6h18" />
@@ -80,8 +78,9 @@
 							<line x1="10" y1="11" x2="10" y2="17" />
 							<line x1="14" y1="11" x2="14" y2="17" />
 						</svg>
+						{{ $t('noteList.delete') }}
 					</button>
-				</span>
+				</div>
 			</div>
 		</div>
 
@@ -103,7 +102,7 @@
 			<slot></slot>
 		</div>
 
-		<!-- 全文浮层：内容溢出时点击弹出，点击其他区域隐藏 -->
+		<!-- 全文浮层：标题行溢出时点击弹出，点击其他区域隐藏 -->
 		<div v-if="popoverNote" ref="popover" class="note-popover" :style="popoverStyle">
 			<div class="note-popover-meta">{{ formatNo(popoverNote.id) }} · {{ formatTime(popoverNote.createdAt) }}</div>
 			<div class="note-popover-body">{{ popoverNote.content }}</div>
@@ -112,7 +111,7 @@
 </template>
 
 <script>
-import { formatTime, formatNo, notebookById, highlightSegments, FOLDER_DEFAULT } from '../store'
+import { formatTime, formatNo, notebookById, highlightSegments } from '../store'
 
 export default {
 	name: 'NoteList',
@@ -127,7 +126,7 @@ export default {
 	},
 	data() {
 		return {
-			overflowMap: {}, // { noteId: true } 内容列实际溢出的笔记
+			overflowMap: {}, // { noteId: true } 标题行实际溢出的笔记
 			popoverNote: null, // 正在展示的浮层笔记
 			popoverStyle: {}
 		}
@@ -151,9 +150,6 @@ export default {
 	methods: {
 		formatTime: formatTime,
 		formatNo: formatNo,
-		isDefaultFolder(id) {
-			return id === FOLDER_DEFAULT()
-		},
 		notebookName(id) {
 			const nb = notebookById(this.state, id)
 			return nb ? nb.name : this.$t('noteList.uncategorized')
@@ -161,8 +157,7 @@ export default {
 		segments(content) {
 			return highlightSegments(content, this.searching ? this.keyword : '')
 		},
-		/* 延迟到卡片入场动画结束后再测量，避免动画期间布局不稳定导致漏判/误判。
-		   卡片动画 cardIn 0.28s + 最多 200ms delay，这里用 400ms 兜底保证动画结束 */
+		/* 延迟到卡片入场动画结束后再测量，避免动画期间布局不稳定导致漏判/误判 */
 		scheduleOverflow() {
 			if (this._raf) cancelAnimationFrame(this._raf)
 			if (this._ot) clearTimeout(this._ot)
@@ -173,14 +168,13 @@ export default {
 		onResize() {
 			this.scheduleOverflow()
 		},
-		/* 按 noteId 精确测量每个内容列是否溢出（scrollWidth > clientWidth） */
+		/* 按 noteId 精确测量每个标题行是否溢出（scrollWidth > clientWidth） */
 		measureOverflow() {
 			const map = {}
 			const notes = this.notes || []
 			for (let i = 0; i < notes.length; i++) {
 				const id = notes[i].id
 				const el = this.$refs['content-' + id]
-				// $refs 对 :ref 绑定可能返回单个元素或数组，做归一化
 				const node = Array.isArray(el) ? el[0] : el
 				if (node && node.scrollWidth > node.clientWidth + 1) {
 					map[id] = true
@@ -188,8 +182,7 @@ export default {
 			}
 			this.overflowMap = map
 		},
-		/* 仅当内容溢出时才允许点击弹出全文浮层。
-		   点击时即时测量该列是否溢出，避免依赖可能滞后的预测量结果 */
+		/* 仅当标题行溢出时才允许点击弹出全文浮层 */
 		onContentClick(note, e) {
 			const cell = e.currentTarget
 			const isOverflow = cell && cell.scrollWidth > cell.clientWidth + 1
@@ -216,8 +209,7 @@ export default {
 			if (!this.popoverNote) return
 			const pop = this.$refs.popover
 			if (pop && pop.contains(e.target)) return // 点浮层内部不关闭
-			// 点击任意内容列：交给 @click 的 onContentClick 处理（切换/关闭），此处不提前关闭
-			if (e.target && e.target.closest && e.target.closest('.col-content')) return
+			if (e.target && e.target.closest && e.target.closest('.note-item-title')) return // 点标题行交给 @click 处理
 			this.closePopover()
 		}
 	}

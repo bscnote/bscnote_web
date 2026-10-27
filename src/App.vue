@@ -133,7 +133,7 @@ export default {
 			noteSort: 'created-desc', // created-desc | created-asc
 			searchKeyword: '',
 			notePage: 1,
-			notePageSize: 10,
+			notePageSize: 30,
 
 			/* 链上数据总量（getUserNoteIds 返回的 total） */
 			noteTotalOnChain: 0, // 当前视图的笔记总数
@@ -144,7 +144,7 @@ export default {
 			trashTotalOnChain: 0, // 回收站总数（顶栏徽标）
 			trashNotes: [], // 回收站当前页笔记（链上加载）
 			trashPage: 1,
-			trashPageSize: 10,
+			trashPageSize: 30,
 			trashSort: 'created-desc', // created-desc | created-asc
 
 			/* CRUD 提交中的 loading */

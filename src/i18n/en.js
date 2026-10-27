@@ -42,7 +42,9 @@ export default {
     delete: 'Delete',
     uncategorized: 'Uncategorized',
     empty: 'No notes here yet',
-    emptyAction: 'Create your first note'
+    emptyAction: 'Create your first note',
+    createdAt: 'Created at',
+    updatedAt: 'Last updated at'
   },
   notebookModal: {
     createTitle: 'New Notebook',

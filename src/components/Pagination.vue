@@ -32,10 +32,10 @@ export default {
 	props: {
 		total: { type: Number, default: 0 },
 		page: { type: Number, default: 1 },
-		pageSize: { type: Number, default: 10 },
+		pageSize: { type: Number, default: 30 },
 		pageSizeOptions: {
 			type: Array,
-			default: function () { return [5, 10, 20, 50] }
+			default: function () { return [20, 30, 50] }
 		}
 	},
 	computed: {
