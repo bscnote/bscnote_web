@@ -51,10 +51,11 @@ export class BscNote {
     }
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' })
     this.account = accounts[0]
-    this.provider = new ethers.providers.Web3Provider(ethProvider)
-    this.signer = this.provider.getSigner()
+    this.provider = new ethers.BrowserProvider(ethProvider)
+    this.signer = await this.provider.getSigner()
 
-    const chainId = await this.signer.getChainId()
+    const network = await this.provider.getNetwork()
+    const chainId = Number(network.chainId)
     if (chainId !== 56) {
       // 网络不对，撤销授权并报错
       try {
@@ -100,10 +101,13 @@ export class BscNote {
 
   /* ---------- 密码派生 / masterKey 包装 ---------- */
   async _deriveWrapperKey(password) {
+    const network = await this.provider.getNetwork()
+    const chainId = Number(network.chainId)
+
     const domain = {
       name: 'BscNote',
       version: '3',
-      chainId: await this.signer.getChainId(),
+      chainId: chainId,
     }
     const types = {
       Authorization: [
@@ -115,7 +119,7 @@ export class BscNote {
       purpose: 'BscNote Derive Wrapper Key',
       user: this.account,
     }
-    const signature = await this.signer._signTypedData(domain, types, message)
+    const signature = await this.signer.signTypedData(domain, types, message)
 
     const enc = new TextEncoder()
     const keyMaterial = await window.crypto.subtle.importKey(
@@ -202,7 +206,7 @@ export class BscNote {
   /* 读取链上信封，判断是否已设置密码；返回 'create' | 'input' */
   async unlock() {
     const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.utils.arrayify(envelopeHex)
+    const envelopeBytes = ethers.getBytes(envelopeHex)
     return envelopeBytes.length === 0 ? 'create' : 'input'
   }
 
@@ -221,14 +225,14 @@ export class BscNote {
   /* 输入密码解锁：从信封解出 masterKey；失败抛错 */
   async inputPassword(password) {
     const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.utils.arrayify(envelopeHex)
+    const envelopeBytes = ethers.getBytes(envelopeHex)
     this.masterKey = await this._unwrapMasterKey(envelopeBytes, password)
   }
 
   /* 修改密码：用旧密码解出，新密码重包装后上链 */
   async modifyPassword(oldPassword, newPassword) {
     const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.utils.arrayify(envelopeHex)
+    const envelopeBytes = ethers.getBytes(envelopeHex)
     const currentMasterKey = await this._unwrapMasterKey(envelopeBytes, oldPassword)
     const newEnvelope = await this._wrapMasterKey(currentMasterKey, newPassword)
     const tx = await this.contract.setUserEnvelope(newEnvelope)
@@ -275,26 +279,29 @@ export class BscNote {
 
   /* 加载笔记并解密为统一结构 */
   async loadNotes(offset, pageSize, asc, folderId, viewType) {
-    const [ids, total] = await this.getNoteIds(offset, pageSize, asc, folderId, viewType)
-    if (!ids || !ids.length) return { notes: [], total: total.toNumber() }
+    const result = await this.getNoteIds(offset, pageSize, asc, folderId, viewType)
+    // ethers v6 返回的 Result 及其嵌套数组是只读（frozen）的，
+    const ids = Array.from(result[0] || [])
+    const total = result[1]
+    if (!ids || !ids.length) return { notes: [], total: Number(total) }
     const raw = await this.getNotes(ids)
     const notes = []
     for (const n of raw) {
       try {
-        const content = await this._decryptText(ethers.utils.arrayify(n.ciphertext))
+        const content = await this._decryptText(ethers.getBytes(n.ciphertext))
         notes.push({
           id: n.id,
           content,
           folderId: n.folderId,
-          createdAt: n.createdAt.toNumber() * 1000, // 链上为秒，转毫秒统一
-          updatedAt: n.updatedAt.toNumber() * 1000,
+          createdAt: Number(n.createdAt) * 1000, // 链上为秒，转毫秒统一
+          updatedAt: Number(n.updatedAt) * 1000,
           isDeleted: n.isDeleted,
         })
       } catch (e) {
-        //console.warn('笔记解密失败', e)
+        // 笔记解密失败：静默跳过（正常情况下不应发生）
       }
     }
-    return { notes, total: total.toNumber() }
+    return { notes, total: Number(total) }
   }
 
   /* ---------- 笔记本业务 ---------- */
@@ -320,12 +327,12 @@ export class BscNote {
     const folders = []
     for (const f of raw) {
       try {
-        const name = await this._decryptText(ethers.utils.arrayify(f.name))
+        const name = await this._decryptText(ethers.getBytes(f.name))
         folders.push({
           id: f.id,
           name,
-          createdAt: f.createdAt.toNumber() * 1000,
-          updatedAt: f.updatedAt.toNumber() * 1000,
+          createdAt: Number(f.createdAt) * 1000,
+          updatedAt: Number(f.updatedAt) * 1000,
         })
       } catch (e) {
         //console.warn('笔记本解密失败', e)
