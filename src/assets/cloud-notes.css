@@ -36,7 +36,6 @@
 	--accent-glow: rgba(252, 213, 53, .18); /* 连接页径向光晕 */
 	--on-accent-inverse: #1B2A41;   /* 黄色强调底上的深色文字（深浅主题统一） */
 	--grad-accent: linear-gradient(135deg, #FCD535, #F59E0B);
-	--grad-lock: linear-gradient(135deg, #1E3A8A, #0C4A6E);
 	--shadow-card: 0 1px 2px rgba(27, 42, 65, .06);
 	--shadow-card-hover: 0 8px 20px rgba(252, 213, 53, .18);
 	--shadow-modal: 0 16px 40px rgba(27, 42, 65, .20);
@@ -77,7 +76,6 @@ html[data-theme="dark"] {
 	--spinner-track: rgba(230, 237, 247, .25);
 	--accent-glow: rgba(252, 213, 53, .12);
 	--grad-accent: linear-gradient(135deg, #FCD535, #F59E0B);
-	--grad-lock: linear-gradient(135deg, #13213D, #0A2438);
 	--shadow-card: 0 1px 2px rgba(0, 0, 0, .4);
 	--shadow-card-hover: 0 8px 20px rgba(252, 213, 53, .12);
 	--shadow-modal: 0 16px 40px rgba(0, 0, 0, .55);
@@ -167,6 +165,21 @@ svg {
 	white-space: nowrap
 }
 
+/* 版本号标签（标题后的小徽标） */
+.version-tag {
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--accent-strong);
+	background: var(--accent-soft);
+	border: 1px solid var(--card-hover-border);
+	border-radius: 999px;
+	padding: 3px 8px;
+	white-space: nowrap;
+	flex: 0 0 auto;
+	transform: translateY(-1px)
+}
+
 .topbar-right {
 	margin-left: auto;
 	display: flex;
@@ -216,6 +229,20 @@ svg {
 .conn-text {
 	font-size: 13px;
 	color: var(--text-2)
+}
+
+/* 连接状态后的钱包地址（缩写徽标） */
+.conn-address {
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--text-2);
+	background: var(--hover-bg);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 4px 8px;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
 }
 
 .topbar-divider {
@@ -1280,95 +1307,6 @@ svg {
 }
 
 /* ============================================================
-   5. 锁屏
-   ============================================================ */
-.lock-screen {
-	position: fixed;
-	inset: 0;
-	z-index: 200;
-	background: var(--grad-lock);
-	display: none;
-	align-items: center;
-	justify-content: center;
-	padding: 20px;
-}
-
-.lock-screen.open {
-	display: flex
-}
-
-.lock-card {
-	width: 360px;
-	max-width: 92vw;
-	background: rgba(255, 255, 255, .12);
-	-webkit-backdrop-filter: blur(16px);
-	backdrop-filter: blur(16px);
-	border: 1px solid rgba(255, 255, 255, .25);
-	border-radius: 16px;
-	box-shadow: var(--shadow-modal);
-	padding: 36px 32px 30px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 16px;
-}
-
-.lock-icon {
-	width: 52px;
-	height: 52px
-}
-
-.lock-title {
-	font-size: 17px;
-	font-weight: 600;
-	color: #fff
-}
-
-.lock-error {
-	font-size: 12px;
-	color: #FFB4B7;
-	height: 14px;
-	visibility: hidden
-}
-
-.lock-error.show {
-	visibility: visible
-}
-
-.lock-card .btn-primary {
-	width: 100%;
-	justify-content: center
-}
-
-.lock-card.shake {
-	animation: shake .36s ease
-}
-
-@keyframes shake {
-
-	0%,
-	100% {
-		transform: translateX(0)
-	}
-
-	20% {
-		transform: translateX(-8px)
-	}
-
-	40% {
-		transform: translateX(8px)
-	}
-
-	60% {
-		transform: translateX(-5px)
-	}
-
-	80% {
-		transform: translateX(5px)
-	}
-}
-
-/* ============================================================
    6. Toast
    ============================================================ */
 .toast {
@@ -1749,32 +1687,6 @@ svg {
 .pwd-toggle:hover {
 	background: var(--hover-bg);
 	color: var(--text-2)
-}
-
-/* 锁屏场景：输入框为近白底深字，眼睛图标用固定深灰 */
-.lock-card .pwd-field input {
-	height: 40px;
-	border: 1px solid rgba(255, 255, 255, .35);
-	background: rgba(255, 255, 255, .9);
-	color: #1B2A41;
-}
-
-.lock-card .pwd-field input::placeholder {
-	color: #93A1B8;
-}
-
-.lock-card .pwd-field input:focus {
-	border-color: #FCD535;
-	box-shadow: 0 0 0 3px rgba(252, 213, 53, .3)
-}
-
-.lock-card .pwd-toggle {
-	color: #93A1B8
-}
-
-.lock-card .pwd-toggle:hover {
-	background: rgba(0, 0, 0, .06);
-	color: #5A6B85
 }
 
 /* ============================================================

@@ -16,8 +16,9 @@
 
 		<!-- ======================== 顶栏 ======================== -->
 		<TopBar :connection="connection" :online="isAppOnline" :trash-count="trashCount" :collapsed="sidebarCollapsed"
+			:account="account"
 			@toggle-sidebar="toggleSidebar" @disconnect="handleDisconnect"
-			@open-trash="openTrashModal" @open-password="openModifyPassModal" @lock="tryLock" />
+			@open-trash="openTrashModal" @open-password="openModifyPassModal" />
 
 		<!-- ======================== 连接钱包页（未连接首屏） ======================== -->
 		<ConnectPage :connecting="connection === 'connecting'" @connect="openWalletSelect" />
@@ -62,10 +63,7 @@
 			@restore="restoreNote" @close="closeModal('trash')"
 			@page-change="onTrashPageChange" @size-change="onTrashSizeChange" @sort-change="onTrashSortChange" />
 
-		<!-- ======================== 锁屏 ======================== -->
-		<LockScreen ref="lockScreen" :visible="lockOpen" :loading="passwordLoading" @unlock="onLockUnlock" />
-
-		<!-- Toast -->
+		<!-- ======================== Toast ======================== -->
 		<AppToast :message="toastMessage" :visible="toastVisible" />
 	</div>
 </template>
@@ -89,7 +87,6 @@ import NoteModal from './components/NoteModal.vue'
 import ConfirmModal from './components/ConfirmModal.vue'
 import TrashModal from './components/TrashModal.vue'
 import PasswordModal from './components/PasswordModal.vue'
-import LockScreen from './components/LockScreen.vue'
 import MoveNoteModal from './components/MoveNoteModal.vue'
 import WalletSelectModal from './components/WalletSelectModal.vue'
 import AppToast from './components/AppToast.vue'
@@ -107,7 +104,6 @@ export default {
 		ConfirmModal,
 		TrashModal,
 		PasswordModal,
-		LockScreen,
 		MoveNoteModal,
 		WalletSelectModal,
 		AppToast,
@@ -119,6 +115,9 @@ export default {
 
 			/* 连接状态：disconnected | connecting | connected */
 			connection: 'disconnected',
+
+			/* 当前连接的钱包地址 */
+			account: '',
 
 			/* 是否已解锁；未解锁不得进入主应用 */
 			unlocked: false,
@@ -196,9 +195,6 @@ export default {
 			/* 删除笔记确认 */
 			deleteNoteTargetId: null,
 			deleteNoteText: '',
-
-			/* 锁屏 */
-			lockOpen: false,
 
 			/* Toast */
 			toastMessage: '',
@@ -308,9 +304,11 @@ export default {
 			try {
 				await this.chain.connect(provider)
 				this.connection = 'connected'
+				this.account = this.chain.account || ''
 				await this.unlock()
 			} catch (e) {
 				this.connection = 'disconnected'
+				this.account = ''
 				this.unlocked = false
 				await this.chain.disconnect()
 				if (e.message === 'NO_WALLET') this.showToast(this.$t('toast.walletMissing'))
@@ -322,10 +320,10 @@ export default {
 		async handleDisconnect() {
 			await this.chain.disconnect()
 			this.connection = 'disconnected'
+			this.account = ''
 			this.unlocked = false
 			this.state = initialState()
 			this.view = { type: 'all' }
-			this.lockOpen = false
 			this.closeAllModals()
 			this.closeDrawer()
 		},
@@ -662,37 +660,6 @@ export default {
 			this.passwordModalMode = 'modify'
 			this.openModal('password')
 		},
-		tryLock() {
-			if (!this.isAppOnline) return
-			// 锁定：清空 masterKey 与数据，回到解锁状态
-			this.lock()
-		},
-		lock() {
-			this.chain.masterKey = null
-			this.unlocked = false
-			this.state = initialState()
-			this.view = { type: 'all' }
-			this.lockOpen = true
-			this.closeAllModals()
-			this.closeDrawer()
-		},
-		async onLockUnlock(password) {
-			this.passwordLoading = true
-			try {
-				await this.chain.inputPassword(password)
-				this.unlocked = true
-				this.lockOpen = false
-				this.showToast(this.$t('toast.unlockSuccess'))
-				await this.loadFolders()
-				await this.loadNotes()
-				await this.loadCounts()
-			} catch (e) {
-				console.error(e)
-				if (this.$refs.lockScreen) this.$refs.lockScreen.fail()
-			} finally {
-				this.passwordLoading = false
-			}
-		},
 
 		/* ==================== 视图 / 搜索 / 排序 / 响应式 ==================== */
 		onSelectView(view) {
@@ -728,7 +695,6 @@ export default {
 		/* ==================== 全局按键 ==================== */
 		onKeydown(e) {
 			if (e.key !== 'Escape') return
-			if (this.lockOpen) return
 			if (this.modalStack.length > 0) this.closeModal()
 			else if (this.isMobile && this.drawerOpen) this.closeDrawer()
 		},

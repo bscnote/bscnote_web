@@ -11,8 +11,7 @@ export default {
     newConnection: '新开连接',
     disconnect: '断开连接',
     trash: '回收站',
-    changePassword: '修改密码',
-    lock: '锁定'
+    changePassword: '修改密码'
   },
   connect: {
     title: '欢迎使用BscNote',
@@ -108,12 +107,6 @@ export default {
     create: '创建密码',
     unlock: '解锁',
     inputPlaceholder: '请输入访问密码'
-  },
-  lock: {
-    title: '应用已锁定',
-    placeholder: '请输入密码',
-    wrong: '密码错误',
-    unlock: '解锁'
   },
   sort: {
     label: '排序',

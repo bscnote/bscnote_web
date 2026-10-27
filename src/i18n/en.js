@@ -11,8 +11,7 @@ export default {
     newConnection: 'New Connection',
     disconnect: 'Disconnect',
     trash: 'Trash',
-    changePassword: 'Change Password',
-    lock: 'Lock'
+    changePassword: 'Change Password'
   },
   connect: {
     title: 'Welcome to BscNote',
@@ -108,12 +107,6 @@ export default {
     create: 'Create Password',
     unlock: 'Unlock',
     inputPlaceholder: 'Enter access password'
-  },
-  lock: {
-    title: 'App Locked',
-    placeholder: 'Enter password',
-    wrong: 'Incorrect password',
-    unlock: 'Unlock'
   },
   sort: {
     label: 'Sort',

@@ -17,12 +17,14 @@
 			</button>
 			<img class="app-logo" src="@/assets/logo/logo512.png" />
 			<span class="app-name">{{ $t('app.name') }}</span>
+			<span class="version-tag">v{{ version }}</span>
 		</div>
 
 		<div class="topbar-right">
 			<div v-if="online" class="conn-group" aria-live="polite">
 				<span class="conn-dot" :class="connection"></span>
 				<span class="conn-text">{{ connText }}</span>
+				<span v-if="account && connection === 'connected'" class="conn-address">{{ shortAddress }}</span>
 			</div>
 			<button v-if="online" class="btn-text" :data-tip="$t('topbar.disconnect')"
 				:disabled="connection !== 'connected'" @click="$emit('disconnect')">
@@ -63,14 +65,6 @@
 					</path>
 				</svg>
 			</button>
-			<button v-if="online" class="icon-btn tip-left" :data-tip="$t('topbar.lock')" :aria-label="$t('topbar.lock')"
-				@click="$emit('lock')">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-					stroke-linejoin="round">
-					<rect x="3" y="11" width="18" height="11" rx="2"></rect>
-					<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-				</svg>
-			</button>
 		</div>
 	</header>
 </template>
@@ -78,6 +72,7 @@
 <script>
 import LangSwitcher from './LangSwitcher.vue'
 import ThemeSwitcher from './ThemeSwitcher.vue'
+import appVersion from '@/version'
 
 export default {
 	name: 'TopBar',
@@ -86,13 +81,23 @@ export default {
 		connection: { type: String, default: 'disconnected' }, // disconnected | connecting | connected
 		online: { type: Boolean, default: false },
 		trashCount: { type: Number, default: 0 },
-		collapsed: { type: Boolean, default: false }
+		collapsed: { type: Boolean, default: false },
+		account: { type: String, default: '' }
+	},
+	data() {
+		return {
+			version: appVersion.version
+		}
 	},
 	computed: {
 		connText() {
 			if (this.connection === 'connected') return this.$t('topbar.connected')
 			if (this.connection === 'connecting') return this.$t('topbar.connecting')
 			return this.$t('topbar.disconnected')
+		},
+		shortAddress() {
+			if (!this.account || this.account.length < 10) return this.account
+			return this.account.slice(0, 8) + '…' + this.account.slice(-6)
 		}
 	}
 }

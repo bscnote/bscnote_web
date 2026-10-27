@@ -1,6 +1,6 @@
 <template>
 	<!-- 密码弹窗，支持三种模式：create(首次创建) / input(输入解锁) / modify(修改) -->
-	<div class="modal-mask" :class="{ open: visible }" @mousedown.self="onMaskClose">
+	<div class="modal-mask" :class="{ open: visible }">
 		<div class="modal" role="dialog" aria-modal="true">
 			<h3 class="modal-title">{{ title }}</h3>
 			<div class="modal-body">
@@ -126,9 +126,6 @@ export default {
 		}
 	},
 	methods: {
-		onMaskClose() {
-			if (!this.loading) this.$emit('close')
-		},
 		onInput() { this.err = false },
 		setError() { this.err = true },
 		isStrong(pwd) {
