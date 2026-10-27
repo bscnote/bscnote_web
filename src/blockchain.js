@@ -49,6 +49,37 @@ export class BscNote {
     if (!ethProvider) {
       throw new Error('NO_WALLET')
     }
+    try {
+      // 1. Change to BSC
+      await ethProvider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x38' }],
+      })
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        await ethProvider.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x38',
+            chainName: 'BNB Smart Chain',
+            nativeCurrency: {
+              name: 'BNB',
+              symbol: 'BNB',
+              decimals: 18,
+            },
+            rpcUrls: [
+              'https://bsc-dataseed.binance.org/',
+              'https://bsc-dataseed1.defibit.io/'
+            ],
+            blockExplorerUrls: ['https://bscscan.com'],
+          }],
+        })
+      } else {
+        // 用户拒绝或其他错误
+        throw new Error('WRONG_NETWORK')
+      }
+    }
+
     const accounts = await ethProvider.request({ method: 'eth_requestAccounts' })
     this.account = accounts[0]
     this.provider = new ethers.BrowserProvider(ethProvider)
