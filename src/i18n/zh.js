@@ -98,10 +98,10 @@ export default {
     wrongCurrent: '密码错误',
     firstHint: '首次使用：请设置一个访问密码，用于加密你的笔记',
     newLabel: '新密码',
-    newPlaceholder: '至少 8 位，含大小写字母、数字和特殊字符',
+    newPlaceholder: '至少 9 位，含大小写字母、数字和特殊字符',
     confirmLabel: '确认新密码',
     confirmPlaceholder: '再次输入新密码',
-    tooShort: '密码至少 8 位',
+    tooShort: '密码至少 9 位',
     weak: '密码需包含大写字母、小写字母、数字和特殊字符',
     tooSimple: '密码过于简单，请勿使用常见密码，并且不要使用键盘上的连续字母或数字',
     mismatch: '两次输入的密码不一致',
@@ -113,8 +113,8 @@ export default {
   },
   sort: {
     label: '排序',
-    createdDesc: '创建时间：新 → 旧',
-    createdAsc: '创建时间：旧 → 新'
+    createdDesc: '更新时间：新 → 旧',
+    createdAsc: '更新时间：旧 → 新'
   },
   search: {
     placeholder: '搜索笔记内容…',

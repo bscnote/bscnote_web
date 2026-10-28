@@ -425,9 +425,6 @@ export default {
 				// 全部笔记总数
 				const all = await this.chain.loadNotes(0, 1, 1, FOLDER_ALL, 0)
 				this.allNotesTotal = all.total
-				// 未分类总数
-				// const uncat = await this.chain.loadNotes(0, 1, 1, FOLDER_DEFAULT(), 0)
-				// this.uncatNotesTotal = uncat.total
 				// 回收站总数
 				const trash = await this.chain.loadNotes(0, 1, 1, FOLDER_ALL, 1)
 				this.trashTotalOnChain = trash.total

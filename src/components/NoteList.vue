@@ -24,7 +24,7 @@
 					</svg>
 				</button>
 			</div>
-			<!-- 排序：按创建时间 升序/降序 -->
+			<!-- 排序：按更新时间 升序/降序 -->
 			<select class="sort-select" :value="sort" :aria-label="$t('sort.label')"
 				@change="$emit('sort-change', $event.target.value)">
 				<option value="created-desc">{{ $t('sort.createdDesc') }}</option>

@@ -114,7 +114,16 @@ export default {
 		loading: { type: Boolean, default: false }
 	},
 	data() {
-		return { oldPwd: '', newPwd: '', newPwd2: '', pwd: '', err: false }
+		return { 
+			oldPwd: '', 
+			newPwd: '', 
+			newPwd2: '', 
+			pwd: '', 
+			err: false ,
+
+			MIN_PASS_LEN: 9
+
+		}
 	},
 	computed: {
 		title() {
@@ -123,10 +132,10 @@ export default {
 			return this.$t('password.title')
 		},
 		newErr() {
-			if (this.newPwd.length > 0 && this.newPwd.length < 8) return this.$t('password.tooShort')
-			if (this.newPwd.length >= 8 && !this.isStrong(this.newPwd)) return this.$t('password.weak')
-			if (this.newPwd.length >= 8 && this.isCommonWeak(this.newPwd)) return this.$t('password.tooSimple')
-			if (this.newPwd.length >= 8 && this.newPwd2.length > 0 && this.newPwd !== this.newPwd2) return this.$t('password.mismatch')
+			if (this.newPwd.length > 0 && this.newPwd.length < this.MIN_PASS_LEN) return this.$t('password.tooShort')
+			if (this.newPwd.length >= this.MIN_PASS_LEN && !this.isStrong(this.newPwd)) return this.$t('password.weak')
+			if (this.newPwd.length >= this.MIN_PASS_LEN && this.isCommonWeak(this.newPwd)) return this.$t('password.tooSimple')
+			if (this.newPwd.length >= this.MIN_PASS_LEN && this.newPwd2.length > 0 && this.newPwd !== this.newPwd2) return this.$t('password.mismatch')
 			return ''
 		},
 		confirmText() {
@@ -142,10 +151,10 @@ export default {
 		confirmDisabled() {
 			if (this.mode === 'input') return this.pwd.trim().length === 0
 			if (this.mode === 'modify') {
-				return this.oldPwd.trim().length === 0 || !!this.newErr || this.newPwd.length < 8 || this.newPwd !== this.newPwd2
+				return this.oldPwd.trim().length === 0 || !!this.newErr || this.newPwd.length < this.MIN_PASS_LEN || this.newPwd !== this.newPwd2
 			}
 			// create
-			return !!this.newErr || this.newPwd.length < 8 || this.newPwd !== this.newPwd2
+			return !!this.newErr || this.newPwd.length < this.MIN_PASS_LEN || this.newPwd !== this.newPwd2
 		}
 	},
 	watch: {
@@ -171,7 +180,7 @@ export default {
 		onInput() { this.err = false },
 		setError() { this.err = true },
 		isStrong(pwd) {
-			return pwd.length >= 8 &&
+			return pwd.length >= this.MIN_PASS_LEN &&
 				/[A-Z]/.test(pwd) &&
 				/[a-z]/.test(pwd) &&
 				/[0-9]/.test(pwd) &&

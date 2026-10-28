@@ -98,10 +98,10 @@ export default {
     wrongCurrent: 'Incorrect password',
     firstHint: 'First time: set an access password to encrypt your notes',
     newLabel: 'New Password',
-    newPlaceholder: 'At least 8 chars, with upper/lowercase, digit & symbol',
+    newPlaceholder: 'At least 9 chars, with upper/lowercase, digit & symbol',
     confirmLabel: 'Confirm New Password',
     confirmPlaceholder: 'Re-enter new password',
-    tooShort: 'Password must be at least 8 characters',
+    tooShort: 'Password must be at least 9 characters',
     weak: 'Password must contain uppercase, lowercase, digit and special character',
     tooSimple: 'Password is too common, please use a stronger one and do not use consecutive letters or digits on the keyboard',
     mismatch: 'The two passwords do not match',
@@ -113,8 +113,8 @@ export default {
   },
   sort: {
     label: 'Sort',
-    createdDesc: 'Created: newest first',
-    createdAsc: 'Created: oldest first'
+    createdDesc: 'Updated: newest first',
+    createdAsc: 'Updated: oldest first'
   },
   search: {
     placeholder: 'Search note content…',

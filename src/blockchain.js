@@ -5,7 +5,7 @@
    ============================================================ */
 import { ethers } from 'ethers'
 
-const CONTRACT_ADDRESS = '0x36cae36D4028c00D65E699306fc32a1572BE767E'
+const CONTRACT_ADDRESS = '0x9D57B2E53c381d54ffeff82150b598015B5e2E64'
 const CONTRACT_ABI = [
   // 笔记
   'function createNote(bytes ciphertext,bytes32 folderId) returns (bytes32)',
@@ -22,7 +22,7 @@ const CONTRACT_ABI = [
   'function moveNoteToFolder(bytes32 noteId, bytes32 folderId)',
   // 信封（存储加密后的 masterKey）
   'function setUserEnvelope(bytes envelope)',
-  'function getUserEnvelope(address user) view returns (bytes)',
+  'function getUserEnvelope(address user) view returns (bytes[])',
 ]
 
 /* 特殊 folderId 常量（与参考实现一致） */
@@ -241,9 +241,9 @@ export class BscNote {
   /* ---------- 解锁流程 ---------- */
   /* 读取链上信封，判断是否已设置密码；返回 'create' | 'input' */
   async unlock() {
-    const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.getBytes(envelopeHex)
-    return envelopeBytes.length === 0 ? 'create' : 'input'
+    const result = await this.contract.getUserEnvelope(this.account)
+    const envs = Array.from(result || [])
+    return envs.length === 0 ? 'create' : 'input'
   }
 
   /* 首次创建密码：生成 masterKey、包装、上链 */
@@ -258,22 +258,41 @@ export class BscNote {
     await tx.wait()
   }
 
+  async checkEnvelope(password) {
+    const result = await this.contract.getUserEnvelope(this.account)
+    const envs = Array.from(result || [])
+    let cmk = null;
+    // 从最后一个开始解码
+    for (let i = envs.length - 1; i >= 0; i--) {
+      try {
+        cmk = await this._unwrapMasterKey(ethers.getBytes(envs[i]), password)
+        break
+      } catch (e) {
+        //解码失败，继续
+      }
+    }
+    return cmk;
+  }
+
   /* 输入密码解锁：从信封解出 masterKey；失败抛错 */
   async inputPassword(password) {
-    const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.getBytes(envelopeHex)
-    this.masterKey = await this._unwrapMasterKey(envelopeBytes, password)
+    let cmk = await this.checkEnvelope(password)
+    if (!cmk) {
+      throw new Error("WRONG_PASSWORD")
+    }
+    this.masterKey = cmk;
   }
 
   /* 修改密码：用旧密码解出，新密码重包装后上链 */
   async modifyPassword(oldPassword, newPassword) {
-    const envelopeHex = await this.contract.getUserEnvelope(this.account)
-    const envelopeBytes = ethers.getBytes(envelopeHex)
-    const currentMasterKey = await this._unwrapMasterKey(envelopeBytes, oldPassword)
-    const newEnvelope = await this._wrapMasterKey(currentMasterKey, newPassword)
+    const cmk = await this.checkEnvelope(oldPassword);
+    if (!cmk) {
+      throw new Error("WRONG_PASSWORD")
+    }
+    const newEnvelope = await this._wrapMasterKey(cmk, newPassword)
     const tx = await this.contract.setUserEnvelope(newEnvelope)
     await tx.wait()
-    this.masterKey = currentMasterKey
+    this.masterKey = cmk;
   }
 
   /* ---------- 笔记业务 ---------- */
@@ -315,6 +334,8 @@ export class BscNote {
 
   /* 加载笔记并解密为统一结构 */
   async loadNotes(offset, pageSize, asc, folderId, viewType) {
+    if (!this.contract) return {notes: [] ,total: 0 }
+    
     const result = await this.getNoteIds(offset, pageSize, asc, folderId, viewType)
     // ethers v6 返回的 Result 及其嵌套数组是只读（frozen）的，
     const ids = Array.from(result[0] || [])
