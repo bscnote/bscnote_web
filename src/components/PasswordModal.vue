@@ -64,6 +64,47 @@
 <script>
 import PasswordInput from './PasswordInput.vue'
 
+/* 常见弱密码（均已满足大小写+数字+特殊字符规则，但过于常见，需拦截） */
+const COMMON_WEAK_PASSWORDS = [
+	'abc@12345', 'abc@123456', 'abc@1234', 'abc123456!', 'abc12345!', 'abc123456@',
+	'password1!', 'password@123', 'password1@', 'password123!', 'p@ssw0rd', 'p@ssw0rd1',
+	'qwerty1!', 'qwerty@123', 'qwerty123!', 'qwerty123@',
+	'aa123456!', 'aa@123456', 'aa123456@', 'aaa@12345', 'aaa12345!',
+	'abcd@1234', 'abcd1234!', 'abcdef@123', 'abcdefg@1',
+	'admin@123', 'admin123!', 'admin123@', 'test@1234', 'test1234!',
+	'welcome1!', 'welcome@123', 'letmein1!', 'iloveyou1!', 'iloveyou@1',
+	'a1b2c3d4!', 'a1b2c3d4@', '123456ab!', '12345678ab!', '123456789ab!',
+	'qaz@12345', 'qaz12345!', 'za@123456', '1qaz@wsx', '1qaz2wsx!'
+]
+
+/* 检测 4+ 连续递增字母或数字（不分大小写），如 abcd / 1234 / 12345 */
+function hasSequence(s) {
+	const lower = s.toLowerCase()
+	for (let i = 0; i <= lower.length - 4; i++) {
+		const a = lower.charCodeAt(i)
+		const b = lower.charCodeAt(i + 1)
+		const c = lower.charCodeAt(i + 2)
+		const d = lower.charCodeAt(i + 3)
+		const isLetter = a >= 97 && a <= 122 && b >= 97 && b <= 122 && c >= 97 && c <= 122 && d >= 97 && d <= 122
+		const isDigit = a >= 48 && a <= 57 && b >= 48 && b <= 57 && c >= 48 && c <= 57 && d >= 48 && d <= 57
+		if ((isLetter || isDigit) && b === a + 1 && c === b + 1 && d === c + 1) return true
+	}
+	return false
+}
+
+/* 检测键盘横排 4+ 连续（qwerty / asdfgh / zxcvbn 片段），如 qwer / asdf / zxcv */
+function hasKeyboardRun(s) {
+	const lower = s.toLowerCase()
+	const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
+	for (let r = 0; r < rows.length; r++) {
+		const row = rows[r]
+		for (let i = 0; i <= row.length - 4; i++) {
+			if (lower.indexOf(row.slice(i, i + 4)) !== -1) return true
+		}
+	}
+	return false
+}
+
 export default {
 	name: 'PasswordModal',
 	components: { PasswordInput },
@@ -84,6 +125,7 @@ export default {
 		newErr() {
 			if (this.newPwd.length > 0 && this.newPwd.length < 8) return this.$t('password.tooShort')
 			if (this.newPwd.length >= 8 && !this.isStrong(this.newPwd)) return this.$t('password.weak')
+			if (this.newPwd.length >= 8 && this.isCommonWeak(this.newPwd)) return this.$t('password.tooSimple')
 			if (this.newPwd.length >= 8 && this.newPwd2.length > 0 && this.newPwd !== this.newPwd2) return this.$t('password.mismatch')
 			return ''
 		},
@@ -134,6 +176,16 @@ export default {
 				/[a-z]/.test(pwd) &&
 				/[0-9]/.test(pwd) &&
 				/[^A-Za-z0-9]/.test(pwd)
+		},
+		/* 常见弱密码：虽满足「大小写+数字+特殊」规则，但过于常见或规律性过强 */
+		isCommonWeak(pwd) {
+			const s = String(pwd || '')
+			const lower = s.toLowerCase()
+			// 1. 常见弱密码黑名单（统一小写比较，覆盖 Abc@12345 这类）
+			if (COMMON_WEAK_PASSWORDS.indexOf(lower) !== -1) return true
+			// 2. 规律检测：4+ 连续递增字母/数字（如 abcd、1234、12345），或键盘横排 4+ 连续（qwer、asdf、zxcv）
+			if (hasSequence(s) || hasKeyboardRun(s)) return true
+			return false
 		},
 		confirm() {
 			if (this.loading || this.confirmDisabled) return

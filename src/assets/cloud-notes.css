@@ -357,6 +357,16 @@ svg {
    1b. 语言切换下拉菜单
    ============================================================ */
 .lang-switcher{position:relative}
+.lang-btn{
+  position:relative;height:32px;border-radius:8px;border:none;background:transparent;
+  color:var(--text-2);display:inline-flex;align-items:center;gap:6px;
+  padding:0 8px;font-size:13px;font-weight:500;
+  transition:background .15s,color .15s;
+}
+.lang-btn:hover{background:var(--accent-soft);color:var(--accent-strong)}
+.lang-btn:disabled{opacity:.5;cursor:not-allowed}
+.lang-btn svg{width:18px;height:18px}
+.lang-label{white-space:nowrap}
 .lang-menu{
   position:absolute;top:calc(100% + 7px);right:0;z-index:1000;
   background:var(--surface);border:1px solid var(--border);border-radius:8px;

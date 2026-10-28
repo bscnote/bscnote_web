@@ -103,6 +103,7 @@ export default {
     confirmPlaceholder: '再次输入新密码',
     tooShort: '密码至少 8 位',
     weak: '密码需包含大写字母、小写字母、数字和特殊字符',
+    tooSimple: '密码过于简单，请勿使用常见密码，并且不要使用键盘上的连续字母或数字',
     mismatch: '两次输入的密码不一致',
     cancel: '取消',
     save: '保存',

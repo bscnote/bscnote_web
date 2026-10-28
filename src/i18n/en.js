@@ -103,6 +103,7 @@ export default {
     confirmPlaceholder: 'Re-enter new password',
     tooShort: 'Password must be at least 8 characters',
     weak: 'Password must contain uppercase, lowercase, digit and special character',
+    tooSimple: 'Password is too common, please use a stronger one and do not use consecutive letters or digits on the keyboard',
     mismatch: 'The two passwords do not match',
     cancel: 'Cancel',
     save: 'Save',
