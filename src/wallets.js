@@ -15,15 +15,6 @@ async function getInstalledWallets() {
   const eip6963Wallets = await discoverEIP6963Wallets()
   wallets.push(...eip6963Wallets)
 
-  // ========== 2. 传统方式补充（防止有些钱包没走 EIP-6963） ==========
-  const legacyWallets = legacyDetectWallets()
-
-  // 去重（以 id 为准，EIP-6963 优先）
-  legacyWallets.forEach(legacy => {
-    if (!wallets.some(w => w.id === legacy.id)) {
-      wallets.push(legacy)
-    }
-  })
   return wallets
 }
 
@@ -53,86 +44,11 @@ async function discoverEIP6963Wallets() {
           icon: info.icon,                       // 图标（base64 或 url）
           rdns: info.rdns,
           installed: true
-          // 可以按需加更多字段
         }
-      }).filter(w => w.id) // 过滤掉无法识别的
-
+      }).filter(w => w.id) 
       resolve(result)
     }, 300)
   })
-}
-
-/**
- * 传统方式检测（降级 + 补充）
- */
-function legacyDetectWallets() {
-  const w = window
-  const eth = w.ethereum
-  const list = []
-
-  // MetaMask
-  let metamaskProvider = null
-  if (Array.isArray(eth?.providers)) {
-    metamaskProvider = eth.providers.find(p => p.isMetaMask && !p.isBraveWallet)
-  } else if (eth?.isMetaMask && !eth.isBraveWallet) {
-    metamaskProvider = eth
-  }
-  if (metamaskProvider) {
-    list.push({
-      id: 'metamask',
-      name: 'MetaMask',
-      provider: metamaskProvider,
-    })
-  }
-
-  // OKX
-  if (w.okxwallet) {
-    list.push({
-      id: 'okx',
-      name: 'OKX Wallet',
-      provider: w.okxwallet,
-    })
-  } else if (eth?.isOkxWallet || eth?.isOKExWallet) {
-    list.push({
-      id: 'okx',
-      name: 'OKX Wallet',
-      provider: eth,
-    })
-  }
-
-  // Binance
-  let binanceProvider = null
-  if (w.binancew3w) {
-    binanceProvider = w.binancew3w.ethereum || w.binancew3w.provider || w.binancew3w
-  } else if (w.BinanceChain) {
-    binanceProvider = w.BinanceChain
-  } else if (eth?.isBinance || eth?.isBinanceWallet) {
-    binanceProvider = eth
-  }
-  if (binanceProvider) {
-    list.push({
-      id: 'binance',
-      name: 'Binance Wallet',
-      provider: binanceProvider,
-    })
-  }
-
-  // Phantom
-  if (w.phantom?.ethereum) {
-    list.push({
-      id: 'phantom',
-      name: 'Phantom',
-      provider: w.phantom.ethereum,
-    })
-  } else if (eth?.isPhantom) {
-    list.push({
-      id: 'phantom',
-      name: 'Phantom',
-      provider: eth,
-    })
-  }
-
-  return list
 }
 
 /** 把 rdns 映射成统一 id */
@@ -142,6 +58,8 @@ function mapRdnsToId(rdns = '') {
   if (r.includes('com.okx') || r.includes('okx')) return 'okx'
   if (r.includes('com.binance') || r.includes('binance')) return 'binance'
   if (r.includes('app.phantom') || r.includes('phantom')) return 'phantom'
+  if (r.includes('com.trustwallet') || r.includes('trustwallet')) return 'trust'
+  if (r.includes('com.coinbase') || r.includes('coinbase')) return 'coinbase'
   // 可继续扩展
   return null
 }
@@ -153,6 +71,8 @@ function mapNameToId(name = '') {
   if (n.includes('okx')) return 'okx'
   if (n.includes('binance')) return 'binance'
   if (n.includes('phantom')) return 'phantom'
+  if (n.includes('trust')) return 'trust'
+  if (n.includes('coinbase')) return 'coinbase'
   return null
 }
 
