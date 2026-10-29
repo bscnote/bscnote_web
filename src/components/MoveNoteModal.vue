@@ -55,6 +55,7 @@ export default {
 		},
 		confirm() {
 			if (this.loading) return
+			if (this.targetId == this.currentFolderId) return
 			// '' 表示移动到默认文件夹（未分类）
 			this.$emit('save', this.targetId === '' ? FOLDER_DEFAULT() : this.targetId)
 		}

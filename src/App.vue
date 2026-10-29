@@ -80,7 +80,7 @@ import {
 	excerpt,
 	FOLDER_DEFAULT
 } from './store'
-import { BscNote, FOLDER_ALL } from './blockchain'
+import { BscNote, FOLDER_ALL, MAX_OFFSET } from './blockchain'
 import TopBar from './components/TopBar.vue'
 import ConnectPage from './components/ConnectPage.vue'
 import SideBar from './components/SideBar.vue'
@@ -143,7 +143,6 @@ export default {
 			/* 链上数据总量（getUserNoteIds 返回的 total） */
 			noteTotalOnChain: 0, // 当前视图的笔记总数
 			allNotesTotal: 0, // 全部笔记总数（侧栏显示）
-			uncatNotesTotal: 0, // 未分类笔记总数（侧栏显示）
 
 			/* 回收站 */
 			trashTotalOnChain: 0, // 回收站总数（顶栏徽标）
@@ -229,16 +228,19 @@ export default {
 		totalCount() {
 			return this.allNotesTotal
 		},
+		/* 未分类笔记数 = 笔记总数 - 各笔记本 noteCount 之和 */
 		uncatCount() {
-			return this.uncatNotesTotal
+			const sum = this.state.notebooks.reduce(function (acc, nb) {
+				return acc + (nb.noteCount || 0)
+			}, 0)
+			return Math.max(0, this.allNotesTotal - sum)
 		},
 		notebooksWithCount() {
-			/* 只传 id/name，不传 count（笔记本后不显示数量） */
 			return this.state.notebooks.map(function (nb) {
 				return {
 					id: nb.id,
 					name: nb.name,
-					count: 0
+					count: nb.noteCount || 0
 				}
 			})
 		},
@@ -422,9 +424,9 @@ export default {
 				}
 				this.closeModal('password')
 				// 解锁/建密码成功后加载数据
-				await this.loadFolders()
 				await this.loadNotes()
 				await this.loadCounts()
+				await this.loadFolders()
 			} catch (e) {
 				console.error(e)
 				// 密码错误：保持在弹窗内提示
@@ -471,10 +473,10 @@ export default {
 		async loadCounts() {
 			try {
 				// 全部笔记总数
-				const all = await this.chain.loadNotes(0, 1, 1, FOLDER_ALL, 0)
+				const all = await this.chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 0)
 				this.allNotesTotal = all.total
 				// 回收站总数
-				const trash = await this.chain.loadNotes(0, 1, 1, FOLDER_ALL, 1)
+				const trash = await this.chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 1)
 				this.trashTotalOnChain = trash.total
 			} catch (e) {
 				console.error(e)
@@ -539,12 +541,7 @@ export default {
 			if (!nb) return
 			this.deleteNbTargetId = id
 			// 查该笔记本的笔记总数（用于确认文案）
-			let count = 0
-			try {
-				const res = await this.chain.loadNotes(0, 1, 1, id, 0)
-				count = res.total
-			} catch (e) { /* ignore */ }
-			this.deleteNbText = this.$t('confirm.deleteNotebookText', { name: nb.name, n: count })
+			this.deleteNbText = this.$t('confirm.deleteNotebookText', { name: nb.name, n: nb.noteCount })
 			this.openModal('deleteNotebook')
 		},
 		async confirmDeleteNotebook() {
@@ -592,8 +589,10 @@ export default {
 					this.showToast(this.$t('toast.noteCreated'))
 				}
 				this.closeModal('note')
+				// 新建会改变所属笔记本的 noteCount
 				await this.loadNotes()
 				await this.loadCounts()
+				if (this.noteModalMode !== 'edit') await this.loadFolders()
 			} catch (e) {
 				console.error(e)
 			} finally {
@@ -624,6 +623,7 @@ export default {
 				await this.chain.moveNoteToFolder(this.moveNoteTargetId, folderId)
 				this.closeModal('moveNote')
 				this.showToast(this.$t('toast.noteMoved'))
+				await this.loadFolders()
 				await this.loadNotes()
 			} catch (e) {
 				console.error(e)
@@ -640,6 +640,7 @@ export default {
 				this.showToast(this.$t('toast.noteDeleted'))
 				await this.loadNotes()
 				await this.loadCounts()
+				await this.loadFolders()
 			} catch (e) {
 				console.error(e)
 			} finally {
@@ -691,6 +692,7 @@ export default {
 				this.showToast(this.$t('toast.noteRestored'))
 				await this.loadNotes()
 				await this.loadCounts()
+				await this.loadFolders()
 			} catch (e) {
 				console.error(e)
 			} finally {

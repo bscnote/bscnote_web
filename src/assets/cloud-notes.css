@@ -1449,10 +1449,6 @@ svg {
 		display: flex
 	}
 
-	.side-item.nb-item .side-count {
-		display: none
-	}
-
 	/* 未连接首屏：卡片 92vw 居中，无抽屉入口（折叠按钮已禁用） */
 	.connect-page {
 		padding: 16px

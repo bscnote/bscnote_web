@@ -35,6 +35,7 @@
 						<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
 					</svg>
 					<span class="item-name">{{ nb.name }}</span>
+					<span v-if="nb.count > 0" class="side-count">{{ nb.count }}</span>
 					<span class="nb-ops">
 						<span class="icon-btn" :data-tip="$t('sidebar.rename')" role="button"
 							@click.stop="$emit('rename-notebook', nb.id)">
@@ -65,6 +66,7 @@
 							d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
 					</svg>
 					<span class="item-name">{{ $t('sidebar.uncategorized') }}</span>
+					<span v-if="uncatCount > 0" class="side-count">{{ uncatCount }}</span>
 				</button>
 			</nav>
 		</div>

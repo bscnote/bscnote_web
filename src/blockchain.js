@@ -5,7 +5,8 @@
    ============================================================ */
 import { ethers } from 'ethers'
 
-const CONTRACT_ADDRESS = '0x9D57B2E53c381d54ffeff82150b598015B5e2E64'
+const CONTRACT_ADDRESS = '0xd127604da46b80E8eE7E03E04B28329DeFB69d7F'
+
 const CONTRACT_ABI = [
   // 笔记
   'function createNote(bytes ciphertext,bytes32 folderId) returns (bytes32)',
@@ -18,7 +19,7 @@ const CONTRACT_ABI = [
   'function createFolder(bytes name) returns (bytes32)',
   'function deleteFolder(bytes32 folderId)',
   'function updateFolder(bytes32 folderId,bytes newName)',
-  'function getUserFolders(address user) view returns (tuple(bytes32 id, address user, bytes name, uint64 createdAt, uint64 updatedAt)[])',
+  'function getUserFolders(address user) view returns (tuple(bytes32 id, address user, bytes name, uint64 createdAt, uint64 updatedAt, uint256 noteCount)[])',
   'function moveNoteToFolder(bytes32 noteId, bytes32 folderId)',
   // 信封（存储加密后的 masterKey）
   'function setUserEnvelope(bytes envelope)',
@@ -28,7 +29,7 @@ const CONTRACT_ABI = [
 /* 特殊 folderId 常量（与参考实现一致） */
 export const FOLDER_ALL = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 export const FOLDER_DEFAULT = '0x0000000000000000000000000000000000000000000000000000000000000000'
-
+export const MAX_OFFSET = 0xFFFFFFFF
 export class BscNote {
   constructor() {
     this.account = null
@@ -388,6 +389,7 @@ export class BscNote {
         folders.push({
           id: f.id,
           name,
+          noteCount: Number(f.noteCount),
           createdAt: Number(f.createdAt) * 1000,
           updatedAt: Number(f.updatedAt) * 1000,
         })
