@@ -132,6 +132,10 @@ export default {
   lang: {
     label: '语言'
   },
+  readEnvelopeLoading: {
+    title: '正在读取数据',
+    countdown: '{n} 秒后自动取消'
+  },
   passwordToggle: {
     show: '显示密码',
     hide: '隐藏密码'
@@ -158,6 +162,7 @@ export default {
     wrongNetwork: '插件钱包网络不正确，请选择 BSC 网络',
     unlockSuccess: '解锁成功',
     passwordCreated: '首次设置密码成功',
-    passwordWrong: '密码错误'
+    passwordWrong: '密码错误',
+    readEnvelopeTimeout: '读取数据超时，请重新连接钱包'
   }
 }

@@ -1,6 +1,6 @@
 <template>
 	<div class="app-shell" :class="{
-		'app-online': isAppOnline,
+		'app-online': isConnected,
 		'sidebar-collapsed': sidebarCollapsed && !isMobile,
 		'drawer-open': drawerOpen && isMobile
 	}">
@@ -15,7 +15,7 @@
 		</svg>
 
 		<!-- ======================== 顶栏 ======================== -->
-		<TopBar :connection="connection" :online="isAppOnline" :trash-count="trashCount" :collapsed="sidebarCollapsed"
+		<TopBar :connection="connection" :online="isConnected" :trash-count="trashCount" :collapsed="sidebarCollapsed"
 			:account="account"
 			@toggle-sidebar="toggleSidebar" @disconnect="handleDisconnect"
 			@open-trash="openTrashModal" @open-password="openModifyPassModal" />
@@ -63,6 +63,9 @@
 			@restore="restoreNote" @close="closeModal('trash')"
 			@page-change="onTrashPageChange" @size-change="onTrashSizeChange" @sort-change="onTrashSortChange" />
 
+
+		<ReadEnvelopeLoading :visible="reading" :seconds="readCountdown" />
+
 		<!-- ======================== Toast ======================== -->
 		<AppToast :message="toastMessage" :visible="toastVisible" />
 	</div>
@@ -88,6 +91,7 @@ import ConfirmModal from './components/ConfirmModal.vue'
 import TrashModal from './components/TrashModal.vue'
 import PasswordModal from './components/PasswordModal.vue'
 import MoveNoteModal from './components/MoveNoteModal.vue'
+import ReadEnvelopeLoading from './components/ReadEnvelopeLoading.vue'
 import WalletSelectModal from './components/WalletSelectModal.vue'
 import AppToast from './components/AppToast.vue'
 import Pagination from './components/Pagination.vue'
@@ -105,6 +109,7 @@ export default {
 		TrashModal,
 		PasswordModal,
 		MoveNoteModal,
+		ReadEnvelopeLoading,
 		WalletSelectModal,
 		AppToast,
 		Pagination
@@ -196,16 +201,25 @@ export default {
 			deleteNoteTargetId: null,
 			deleteNoteText: '',
 
+			/* 读取链上信封（unlock）中的 loading 与倒计时 */
+			reading: false,
+			readCountdown: 10,
+
 			/* Toast */
 			toastMessage: '',
 			toastVisible: false,
 
 			/* 定时器句柄 */
-			toastTimer: null
+			toastTimer: null,
+			readTimeoutTimer: null,
+			readTickTimer: null
 		}
 	},
 	computed: {
-		/* 已解锁（连接钱包 + 输入/创建密码成功）才显示主应用 */
+		isConnected() {
+			return this.connection === 'connected'
+		},
+		/* 已解锁（连接钱包 + 输入/创建密码成功）才能操作数据 */
 		isAppOnline() {
 			return this.connection === 'connected' && this.unlocked
 		},
@@ -283,6 +297,7 @@ export default {
 		window.removeEventListener('resize', this.onResize)
 		document.removeEventListener('keydown', this.onKeydown)
 		clearTimeout(this.toastTimer)
+		this.stopReadEnvelope()
 		if (this.chain) this.chain.disconnect()
 	},
 	methods: {
@@ -318,7 +333,8 @@ export default {
 		},
 
 		async handleDisconnect() {
-			await this.chain.disconnect()
+			this.stopReadEnvelope()
+			// 先复位界面：钱包 revoke 请求若卡住，也不会把用户留在应用内
 			this.connection = 'disconnected'
 			this.account = ''
 			this.unlocked = false
@@ -326,24 +342,56 @@ export default {
 			this.view = { type: 'all' }
 			this.closeAllModals()
 			this.closeDrawer()
+			try {
+				await this.chain.disconnect()
+			} catch (e) { /* ignore */ }
 		},
 
 		/* ==================== 解锁流程 ==================== */
-		/* 读链上信封，判断首次创建密码还是输入密码 */
+		/* 读链上信封判断 create / input；网络卡住时 10 秒超时，按「取消」处理 */
 		async unlock() {
-			try {
-				const mode = await this.chain.unlock()
-				if (mode === 'create') {
-					this.passwordModalMode = 'create'
-				} else {
-					this.passwordModalMode = 'input'
-				}
-				this.openModal('password')
-			} catch (e) {
-				console.error(e)
-				// 读取信封失败：masterKey 为空，无法进入应用，直接断开回到连接页
+			this.startReadEnvelope()
+			const settle = await Promise.race([
+				this.chain.unlock().then(
+					(mode) => ({ ok: true, mode }),
+					(err) => ({ ok: false, err })
+				),
+				new Promise((resolve) => {
+					this.readTimeoutTimer = setTimeout(() => resolve({ timeout: true }), 10000)
+				})
+			])
+			this.stopReadEnvelope()
+
+			if (settle.timeout) {
+				this.showToast(this.$t('toast.readEnvelopeTimeout'))
 				await this.handleDisconnect()
+				return
 			}
+			if (!settle.ok) {
+				console.error(settle.err)
+				await this.handleDisconnect()
+				return
+			}
+
+			this.passwordModalMode = settle.mode === 'create' ? 'create' : 'input'
+			this.openModal('password')
+		},
+
+		startReadEnvelope() {
+			this.stopReadEnvelope()
+			this.reading = true
+			this.readCountdown = 10
+			this.readTickTimer = setInterval(() => {
+				if (this.readCountdown > 0) this.readCountdown -= 1
+			}, 1000)
+		},
+
+		stopReadEnvelope() {
+			this.reading = false
+			clearTimeout(this.readTimeoutTimer)
+			clearInterval(this.readTickTimer)
+			this.readTimeoutTimer = null
+			this.readTickTimer = null
 		},
 
 		/* 密码弹窗关闭（取消 / 点遮罩 / 关闭按钮）
@@ -692,6 +740,11 @@ export default {
 		/* ==================== 全局按键 ==================== */
 		onKeydown(e) {
 			if (e.key !== 'Escape') return
+			const top = this.modalStack[this.modalStack.length - 1]
+			if (top === 'password' && !this.unlocked) {
+				this.onPasswordModalClose()
+				return
+			}
 			if (this.modalStack.length > 0) this.closeModal()
 			else if (this.isMobile && this.drawerOpen) this.closeDrawer()
 		},

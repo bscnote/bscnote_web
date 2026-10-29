@@ -132,6 +132,10 @@ export default {
   lang: {
     label: 'Language'
   },
+  readEnvelopeLoading: {
+    title: 'Reading data',
+    countdown: 'Auto-cancel in {n}s'
+  },
   passwordToggle: {
     show: 'Show password',
     hide: 'Hide password'
@@ -158,6 +162,7 @@ export default {
     wrongNetwork: 'Wrong network. Please select BSC network',
     unlockSuccess: 'Unlocked successfully',
     passwordCreated: 'Password set successfully',
-    passwordWrong: 'Incorrect password'
+    passwordWrong: 'Incorrect password',
+    readEnvelopeTimeout: 'Reading data timed out, please reconnect your wallet'
   }
 }
