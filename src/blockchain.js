@@ -5,7 +5,7 @@
    ============================================================ */
 import { ethers } from 'ethers'
 
-const CONTRACT_ADDRESS = '0xd127604da46b80E8eE7E03E04B28329DeFB69d7F'
+const CONTRACT_ADDRESS = '0x83AB7fBfC8B6962FEe34F87A08AdeC14A95e5FA6'
 
 const CONTRACT_ABI = [
   // 笔记

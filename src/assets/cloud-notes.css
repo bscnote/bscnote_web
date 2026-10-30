@@ -421,8 +421,8 @@ svg {
 	height: 38px;
 	border-radius: 8px;
 	border: 1px dashed var(--input-border);
-	background: var(--surface);
-	color: var(--text-2);
+	background: var(--accent);
+	color: var(--on-accent-inverse);
 	font-size: 14px;
 	font-weight: 500;
 	display: flex;
@@ -439,8 +439,8 @@ svg {
 
 .btn-new-notebook:hover {
 	border-color: var(--accent-active);
-	color: var(--accent-strong);
-	background: var(--accent-soft);
+	color: var(--on-accent-inverse);
+	background: var(--accent-hover);
 	border-style: solid
 }
 
@@ -985,8 +985,8 @@ svg {
 	inset: 0;
 	z-index: 100;
 	background: var(--mask);
-	-webkit-backdrop-filter: blur(6px);
-	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(4px);
+	backdrop-filter: blur(4px);
 	display: none;
 	align-items: center;
 	justify-content: center;
@@ -1695,6 +1695,9 @@ svg {
 .wallet-modal {
 	width: 400px;
 	max-width: 92vw;
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100vh - 32px);
 }
 
 .wallet-desc {
@@ -1708,6 +1711,33 @@ svg {
 	flex-direction: column;
 	gap: 8px;
 	margin-bottom: 4px;
+	max-height: 340px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding-right: 4px;
+}
+
+.wallet-list::-webkit-scrollbar {
+	width: 6px
+}
+
+.wallet-list::-webkit-scrollbar-thumb {
+	background: var(--input-border);
+	border-radius: 3px
+}
+
+.wallet-list::-webkit-scrollbar-thumb:hover {
+	background: var(--text-3)
+}
+
+.wallet-list::-webkit-scrollbar-track {
+	background: transparent
+}
+
+.wallet-modal .modal-title,
+.wallet-modal .wallet-desc,
+.wallet-modal .modal-actions {
+	flex: 0 0 auto
 }
 
 .wallet-item {
@@ -1715,6 +1745,7 @@ svg {
 	align-items: center;
 	gap: 12px;
 	width: 100%;
+	flex: 0 0 auto; 
 	padding: 12px 14px;
 	border: 1px solid var(--border);
 	border-radius: 10px;

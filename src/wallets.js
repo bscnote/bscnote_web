@@ -78,8 +78,9 @@ function mapNameToId(name = '') {
 
 /* 返回钱包列表（含安装状态与 provider） */
 export async function listWallets() {
-
-  let wallets = await getInstalledWallets();
-  return wallets;
+  const wallets = await getInstalledWallets()
+  return wallets.sort(function (a, b) {
+    return String(a.name || '').localeCompare(String(b.name || ''), 'en', { sensitivity: 'base' })
+  })
 }
 

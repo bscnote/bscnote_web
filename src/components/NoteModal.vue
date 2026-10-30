@@ -8,7 +8,7 @@
 					<span class="field-label">{{ $t('noteModal.notebookLabel') }}</span>
 					<!-- 编辑态：所属笔记本不可修改（需通过列表项点击移动） -->
 					<select v-model="notebookId" :disabled="mode === 'edit'">
-						<option value="">{{ $t('noteModal.uncategorized') }}</option>
+						<option value="0x0000000000000000000000000000000000000000000000000000000000000000">{{ $t('noteModal.uncategorized') }}</option>
 						<option v-for="nb in notebooks" :key="nb.id" :value="nb.id">{{ nb.name }}</option>
 					</select>
 				</label>
