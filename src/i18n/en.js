@@ -11,7 +11,10 @@ export default {
     newConnection: 'New Connection',
     disconnect: 'Disconnect',
     trash: 'Trash',
-    changePassword: 'Change Password'
+    changePassword: 'Change Password',
+    help: 'Help Center',
+    github: 'GitHub',
+    x: 'X'
   },
   connect: {
     title: 'Welcome to BscNote',

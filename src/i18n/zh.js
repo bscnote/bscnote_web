@@ -11,7 +11,10 @@ export default {
     newConnection: '新开连接',
     disconnect: '断开连接',
     trash: '回收站',
-    changePassword: '修改密码'
+    changePassword: '修改密码',
+    help: '帮助中心',
+    github: 'GitHub',
+    x: 'X'
   },
   connect: {
     title: '欢迎使用BscNote',

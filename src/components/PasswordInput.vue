@@ -7,7 +7,7 @@
 			:placeholder="placeholder"
 			:autocomplete="autocomplete"
 			:disabled="disabled"
-			maxlength="30"
+			maxlength="64"
 			@input="$emit('input', $event.target.value)"
 			@keydown.enter="$emit('enter')"
 		>

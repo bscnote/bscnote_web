@@ -136,8 +136,7 @@ export class BscNote {
     this.masterKey = null
   }
 
-  /* ---------- 密码派生 / masterKey 包装 ---------- */
-  async _deriveWrapperKey(password) {
+  async _getSignData() {
     const network = await this.provider.getNetwork()
     const chainId = Number(network.chainId)
 
@@ -157,7 +156,11 @@ export class BscNote {
       user: this.account,
     }
     const signature = await this.signer.signTypedData(domain, types, message)
+    return signature;
+  }
 
+  /* ---------- 密码派生 / masterKey 包装 ---------- */
+  async _deriveWrapperKey(signature, password) {
     const enc = new TextEncoder()
     const keyMaterial = await window.crypto.subtle.importKey(
       'raw',
@@ -180,8 +183,8 @@ export class BscNote {
     )
   }
 
-  async _wrapMasterKey(masterKey, password) {
-    const wrapperKey = await this._deriveWrapperKey(password)
+  async _wrapMasterKey(masterKey, signature,password) {
+    const wrapperKey = await this._deriveWrapperKey(signature,password)
     const iv = window.crypto.getRandomValues(new Uint8Array(12))
     const rawKey = await window.crypto.subtle.exportKey('raw', masterKey)
     const wrapped = await window.crypto.subtle.encrypt(
@@ -195,8 +198,8 @@ export class BscNote {
     return result
   }
 
-  async _unwrapMasterKey(envelopeBytes, password) {
-    const wrapperKey = await this._deriveWrapperKey(password)
+  async _unwrapMasterKey(envelopeBytes, signature,password) {
+    const wrapperKey = await this._deriveWrapperKey(signature,password)
     const iv = envelopeBytes.slice(0, 12)
     const data = envelopeBytes.slice(12)
     const rawKey = await window.crypto.subtle.decrypt(
@@ -254,19 +257,20 @@ export class BscNote {
       true,
       ['encrypt', 'decrypt']
     )
-    const envelope = await this._wrapMasterKey(this.masterKey, password)
+    const signature = await this._getSignData();
+    const envelope = await this._wrapMasterKey(this.masterKey, signature, password)
     const tx = await this.contract.setUserEnvelope(envelope)
     await tx.wait()
   }
 
-  async checkEnvelope(password) {
+  async checkEnvelope(signature,password) {
     const result = await this.contract.getUserEnvelope(this.account)
     const envs = Array.from(result || [])
     let cmk = null;
     // 从最后一个开始解码
     for (let i = envs.length - 1; i >= 0; i--) {
       try {
-        cmk = await this._unwrapMasterKey(ethers.getBytes(envs[i]), password)
+        cmk = await this._unwrapMasterKey(ethers.getBytes(envs[i]), signature,password)
         break
       } catch (e) {
         //解码失败，继续
@@ -277,7 +281,8 @@ export class BscNote {
 
   /* 输入密码解锁：从信封解出 masterKey；失败抛错 */
   async inputPassword(password) {
-    let cmk = await this.checkEnvelope(password)
+    const signature = await this._getSignData();
+    let cmk = await this.checkEnvelope(signature, password)
     if (!cmk) {
       throw new Error("WRONG_PASSWORD")
     }
@@ -286,11 +291,12 @@ export class BscNote {
 
   /* 修改密码：用旧密码解出，新密码重包装后上链 */
   async modifyPassword(oldPassword, newPassword) {
-    const cmk = await this.checkEnvelope(oldPassword);
+    const signature = await this._getSignData();
+    const cmk = await this.checkEnvelope(signature, oldPassword);
     if (!cmk) {
       throw new Error("WRONG_PASSWORD")
     }
-    const newEnvelope = await this._wrapMasterKey(cmk, newPassword)
+    const newEnvelope = await this._wrapMasterKey(cmk, signature, newPassword)
     const tx = await this.contract.setUserEnvelope(newEnvelope)
     await tx.wait()
     this.masterKey = cmk;
