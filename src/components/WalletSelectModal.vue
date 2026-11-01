@@ -36,6 +36,14 @@
 <script>
 import { listWallets } from '../wallets'
 
+/* 钱包图标白名单：仅允许 data:image/ 与 https://，其余一律丢弃 */
+function safeIcon(icon) {
+	const src = String(icon || '').trim()
+	if (/^data:image\//i.test(src)) return src
+	if (/^https:\/\//i.test(src)) return src
+	return ''
+}
+
 export default {
 	name: 'WalletSelectModal',
 	props: {
@@ -63,7 +71,10 @@ export default {
 			this.wallets = []
 			try {
 				const res = await listWallets()
-				this.wallets = res || []
+				this.wallets = (res || []).map((w) => {
+					w.icon = safeIcon(w.icon)
+					return w
+				})
 			} catch (e) {
 				console.error(e)
 				this.wallets = []

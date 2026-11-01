@@ -80,7 +80,8 @@ import {
 	excerpt,
 	FOLDER_DEFAULT
 } from './store'
-import { BscNote, FOLDER_ALL, MAX_OFFSET } from './blockchain'
+import { FOLDER_ALL, MAX_OFFSET } from './blockchain'
+import chain from './chain'
 import TopBar from './components/TopBar.vue'
 import ConnectPage from './components/ConnectPage.vue'
 import SideBar from './components/SideBar.vue'
@@ -126,9 +127,6 @@ export default {
 
 			/* 是否已解锁；未解锁不得进入主应用 */
 			unlocked: false,
-
-			/* 链上服务实例（非响应式） */
-			chain: new BscNote(),
 
 			view: {
 				type: 'all'
@@ -300,7 +298,7 @@ export default {
 		document.removeEventListener('keydown', this.onKeydown)
 		clearTimeout(this.toastTimer)
 		this.stopReadEnvelope()
-		if (this.chain) this.chain.disconnect()
+		chain.disconnect()
 	},
 	methods: {
 		/* ==================== 钱包连接 ==================== */
@@ -319,15 +317,15 @@ export default {
 			this.connection = 'connecting'
 			this.unlocked = false
 			try {
-				await this.chain.connect(provider)
+				await chain.connect(provider)
 				this.connection = 'connected'
-				this.account = this.chain.account || ''
+				this.account = chain.account || ''
 				await this.unlock()
 			} catch (e) {
 				this.connection = 'disconnected'
 				this.account = ''
 				this.unlocked = false
-				await this.chain.disconnect()
+				await chain.disconnect()
 				if (e.message === 'NO_WALLET') this.showToast(this.$t('toast.walletMissing'))
 				else if (e.message === 'WRONG_NETWORK') this.showToast(this.$t('toast.wrongNetwork'))
 				else console.error(e)
@@ -337,15 +335,15 @@ export default {
 		async handleDisconnect() {
 			this.stopReadEnvelope()
 			// 先复位界面：钱包 revoke 请求若卡住，也不会把用户留在应用内
+			this.state = initialState()
 			this.connection = 'disconnected'
 			this.account = ''
 			this.unlocked = false
-			this.state = initialState()
 			this.view = { type: 'all' }
 			this.closeAllModals()
 			this.closeDrawer()
 			try {
-				await this.chain.disconnect()
+				await chain.disconnect()
 			} catch (e) { /* ignore */ }
 		},
 
@@ -354,7 +352,7 @@ export default {
 		async unlock() {
 			this.startReadEnvelope()
 			const settle = await Promise.race([
-				this.chain.unlock().then(
+				chain.unlock().then(
 					(mode) => ({ ok: true, mode }),
 					(err) => ({ ok: false, err })
 				),
@@ -410,16 +408,16 @@ export default {
 			this.passwordLoading = true
 			try {
 				if (this.passwordModalMode === 'create') {
-					await this.chain.createPassword(payload.newPassword)
+					await chain.createPassword(payload.newPassword)
 					this.unlocked = true
 					this.showToast(this.$t('toast.passwordCreated'))
 				} else if (this.passwordModalMode === 'input') {
-					await this.chain.inputPassword(payload.password)
+					await chain.inputPassword(payload.password)
 					this.unlocked = true
 					this.showToast(this.$t('toast.unlockSuccess'))
 				} else {
 					// modify
-					await this.chain.modifyPassword(payload.oldPassword, payload.newPassword)
+					await chain.modifyPassword(payload.oldPassword, payload.newPassword)
 					this.showToast(this.$t('toast.passwordUpdated'))
 				}
 				this.closeModal('password')
@@ -442,7 +440,7 @@ export default {
 		/* ==================== 数据加载 ==================== */
 		async loadFolders() {
 			try {
-				const folders = await this.chain.loadFolders()
+				const folders = await chain.loadFolders()
 				this.state.notebooks = folders
 			} catch (e) {
 				console.error(e)
@@ -461,7 +459,7 @@ export default {
 				const asc = this.noteSort === 'created-asc' ? 0 : 1
 				// offset：分页偏移
 				const offset = (this.notePage - 1) * this.notePageSize
-				const { notes, total } = await this.chain.loadNotes(offset, this.notePageSize, asc, folderId, 0)
+				const { notes, total } = await chain.loadNotes(offset, this.notePageSize, asc, folderId, 0)
 				this.state.notes = notes
 				this.noteTotalOnChain = total
 			} catch (e) {
@@ -473,10 +471,10 @@ export default {
 		async loadCounts() {
 			try {
 				// 全部笔记总数
-				const all = await this.chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 0)
+				const all = await chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 0)
 				this.allNotesTotal = all.total
 				// 回收站总数
-				const trash = await this.chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 1)
+				const trash = await chain.loadNotes(MAX_OFFSET, 1, 1, FOLDER_ALL, 1)
 				this.trashTotalOnChain = trash.total
 			} catch (e) {
 				console.error(e)
@@ -521,10 +519,10 @@ export default {
 			this.actionLoading = true
 			try {
 				if (this.nbModalMode === 'rename') {
-					await this.chain.updateFolder(this.nbModalTargetId, name)
+					await chain.updateFolder(this.nbModalTargetId, name)
 					this.showToast(this.$t('toast.notebookRenamed'))
 				} else {
-					await this.chain.createFolder(name)
+					await chain.createFolder(name)
 					this.showToast(this.$t('toast.notebookCreated'))
 				}
 				this.closeModal('notebook')
@@ -548,7 +546,7 @@ export default {
 			if (this.actionLoading) return
 			this.actionLoading = true
 			try {
-				await this.chain.deleteFolder(this.deleteNbTargetId)
+				await chain.deleteFolder(this.deleteNbTargetId)
 				if (this.view.type === 'notebook' && this.view.id === this.deleteNbTargetId) this.view = { type: 'all' }
 				this.closeModal('deleteNotebook')
 				this.showToast(this.$t('toast.notebookDeleted'))
@@ -583,9 +581,9 @@ export default {
 				// 归属 folderId：未选择时为默认文件夹
 				const folderId = payload.notebookId || FOLDER_DEFAULT()
 				if (this.noteModalMode === 'edit') {
-					await this.chain.updateNote(this.noteModalTargetId, payload.content)
+					await chain.updateNote(this.noteModalTargetId, payload.content)
 				} else {
-					await this.chain.createNote(payload.content, folderId)
+					await chain.createNote(payload.content, folderId)
 					this.showToast(this.$t('toast.noteCreated'))
 				}
 				this.closeModal('note')
@@ -620,7 +618,7 @@ export default {
 			if (this.actionLoading) return
 			this.actionLoading = true
 			try {
-				await this.chain.moveNoteToFolder(this.moveNoteTargetId, folderId)
+				await chain.moveNoteToFolder(this.moveNoteTargetId, folderId)
 				this.closeModal('moveNote')
 				this.showToast(this.$t('toast.noteMoved'))
 				await this.loadFolders()
@@ -635,7 +633,7 @@ export default {
 			if (this.actionLoading) return
 			this.actionLoading = true
 			try {
-				await this.chain.deleteNote(this.deleteNoteTargetId)
+				await chain.deleteNote(this.deleteNoteTargetId)
 				this.closeModal('deleteNote')
 				this.showToast(this.$t('toast.noteDeleted'))
 				await this.loadNotes()
@@ -654,7 +652,7 @@ export default {
 			try {
 				const asc = this.trashSort === 'created-asc' ? 0 : 1
 				const offset = (this.trashPage - 1) * this.trashPageSize
-				const { notes, total } = await this.chain.loadNotes(offset, this.trashPageSize, asc, FOLDER_ALL, 1)
+				const { notes, total } = await chain.loadNotes(offset, this.trashPageSize, asc, FOLDER_ALL, 1)
 				this.trashNotes = notes
 				this.trashTotalOnChain = total
 			} catch (e) {
@@ -687,7 +685,7 @@ export default {
 			this.trashLoadingId = id
 			this.actionLoading = true
 			try {
-				await this.chain.restoreNote(id)
+				await chain.restoreNote(id)
 				this.closeModal('trash')
 				this.showToast(this.$t('toast.noteRestored'))
 				await this.loadNotes()
