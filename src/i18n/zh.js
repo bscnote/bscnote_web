@@ -14,7 +14,8 @@ export default {
     changePassword: '修改密码',
     help: '帮助中心',
     github: 'GitHub',
-    x: 'X'
+    x: 'X',
+    changelog: '更新日志'
   },
   connect: {
     title: '欢迎使用BscNote',
@@ -148,6 +149,17 @@ export default {
     switchToDark: '切换深色模式',
     switchToLight: '切换浅色模式'
   },
+  changelog: {
+    title: '更新日志',
+    close: '关闭',
+    searchPlaceholder: '搜索版本号或更新内容…',
+    noResult: '没有匹配的更新记录',
+    entries: {
+      v106: {
+        '1': '新增 - 20分钟未操作，自动断开钱包连接'
+      }
+    }
+  },
   toast: {
     connected: '连接已建立',
     reconnected: '已重新连接',
@@ -166,6 +178,7 @@ export default {
     unlockSuccess: '解锁成功',
     passwordCreated: '首次设置密码成功',
     passwordWrong: '密码错误',
-    readEnvelopeTimeout: '读取数据超时，请重新连接钱包'
+    readEnvelopeTimeout: '读取数据超时，请重新连接钱包',
+    idleTimeout: '长时间未操作，已自动断开连接'
   }
 }

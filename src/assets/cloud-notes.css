@@ -388,6 +388,8 @@ svg {
 	position: relative;
 	height: 32px;
 	border-radius: 8px;
+	border: none;
+	background: transparent;
 	color: var(--text-2);
 	display: inline-flex;
 	align-items: center;
@@ -396,6 +398,7 @@ svg {
 	font-size: 13px;
 	font-weight: 500;
 	text-decoration: none;
+	cursor: pointer;
 	transition: background .15s, color .15s;
 }
 
@@ -1675,6 +1678,98 @@ svg {
 	color: var(--text-2);
 	margin-right: auto;
 	font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   更新日志弹窗
+   ============================================================ */
+.changelog-modal {
+	width: 560px
+}
+
+.changelog-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.changelog-toolbar .changelog-search {
+	flex: 1;
+	margin: 0;
+	min-width: 0;
+}
+
+.changelog-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 56vh;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.changelog-list::-webkit-scrollbar {
+	width: 6px
+}
+
+.changelog-list::-webkit-scrollbar-thumb {
+	background: var(--input-border);
+	border-radius: 3px
+}
+
+.changelog-list::-webkit-scrollbar-thumb:hover {
+	background: var(--text-3)
+}
+
+.changelog-entry {
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--surface);
+	padding: 14px 16px;
+}
+
+.changelog-entry-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+.changelog-version {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--accent-strong);
+	background: var(--accent-soft);
+	border-radius: 999px;
+	padding: 2px 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.changelog-date {
+	font-size: 13px;
+	color: var(--text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+.changelog-changes {
+	margin: 0;
+	padding-left: 18px;
+	list-style: disc;
+}
+
+.changelog-changes li {
+	font-size: 14px;
+	color: var(--text);
+	line-height: 1.7;
+	margin: 2px 0;
+}
+
+.changelog-empty {
+	padding: 40px 0;
+	text-align: center;
+	font-size: 14px;
+	color: var(--text-3);
 }
 
 /* ============================================================

@@ -18,7 +18,7 @@
 		<TopBar :connection="connection" :online="isConnected" :trash-count="trashCount" :collapsed="sidebarCollapsed"
 			:account="account"
 			@toggle-sidebar="toggleSidebar" @disconnect="handleDisconnect"
-			@open-trash="openTrashModal" @open-password="openModifyPassModal" />
+			@open-trash="openTrashModal" @open-password="openModifyPassModal" @open-changelog="openChangelogModal" />
 
 		<!-- ======================== 连接钱包页（未连接首屏） ======================== -->
 		<ConnectPage :connecting="connection === 'connecting'" @connect="openWalletSelect" />
@@ -62,6 +62,7 @@
 			:page="trashPage" :page-size="trashPageSize" :sort="trashSort" :loading-id="trashLoadingId"
 			@restore="restoreNote" @close="closeModal('trash')"
 			@page-change="onTrashPageChange" @size-change="onTrashSizeChange" @sort-change="onTrashSortChange" />
+		<ChangelogModal :visible="modals.changelog" @close="closeModal('changelog')" />
 
 
 		<ReadEnvelopeLoading :visible="reading" :seconds="readCountdown" />
@@ -90,6 +91,7 @@ import NotebookModal from './components/NotebookModal.vue'
 import NoteModal from './components/NoteModal.vue'
 import ConfirmModal from './components/ConfirmModal.vue'
 import TrashModal from './components/TrashModal.vue'
+import ChangelogModal from './components/ChangelogModal.vue'
 import PasswordModal from './components/PasswordModal.vue'
 import MoveNoteModal from './components/MoveNoteModal.vue'
 import ReadEnvelopeLoading from './components/ReadEnvelopeLoading.vue'
@@ -108,6 +110,7 @@ export default {
 		NoteModal,
 		ConfirmModal,
 		TrashModal,
+		ChangelogModal,
 		PasswordModal,
 		MoveNoteModal,
 		ReadEnvelopeLoading,
@@ -171,7 +174,8 @@ export default {
 				deleteNote: false,
 				password: false,
 				moveNote: false,
-				trash: false
+				trash: false,
+				changelog: false
 			},
 			modalStack: [],
 
@@ -209,7 +213,8 @@ export default {
 			/* 定时器句柄 */
 			toastTimer: null,
 			readTimeoutTimer: null,
-			readTickTimer: null
+			readTickTimer: null,
+			idleTimer: null
 		}
 	},
 	computed: {
@@ -287,15 +292,22 @@ export default {
 		noteSort() {
 			this.notePage = 1
 			this.loadNotes()
+		},
+		/* 进入/退出应用：启停空闲超时计时 */
+		isAppOnline(val) {
+			if (val) this.startIdleTimer()
+			else this.stopIdleTimer()
 		}
 	},
 	mounted() {
 		window.addEventListener('resize', this.onResize)
 		document.addEventListener('keydown', this.onKeydown)
+		this.bindIdleWatcher()
 	},
 	beforeDestroy() {
 		window.removeEventListener('resize', this.onResize)
 		document.removeEventListener('keydown', this.onKeydown)
+		this.unbindIdleWatcher()
 		clearTimeout(this.toastTimer)
 		this.stopReadEnvelope()
 		chain.disconnect()
@@ -345,6 +357,38 @@ export default {
 			try {
 				await chain.disconnect()
 			} catch (e) { /* ignore */ }
+		},
+
+		/* ==================== 空闲超时 ==================== */
+		/* 绑定全局活动监听：任何点击/按键/触摸/滚动都视为操作，重置计时 */
+		bindIdleWatcher() {
+			document.addEventListener('mousedown', this.onActivity)
+			document.addEventListener('keydown', this.onActivity)
+			document.addEventListener('touchstart', this.onActivity)
+			document.addEventListener('scroll', this.onActivity, true)
+		},
+		unbindIdleWatcher() {
+			document.removeEventListener('mousedown', this.onActivity)
+			document.removeEventListener('keydown', this.onActivity)
+			document.removeEventListener('touchstart', this.onActivity)
+			document.removeEventListener('scroll', this.onActivity, true)
+			this.stopIdleTimer()
+		},
+		onActivity() {
+			if (this.idleTimer) this.startIdleTimer()
+		},
+		startIdleTimer() {
+			this.stopIdleTimer()
+			this.idleTimer = setTimeout(() => {
+				this.showToast(this.$t('toast.idleTimeout'))
+				this.handleDisconnect()
+			}, 20 * 60 * 1000)
+		},
+		stopIdleTimer() {
+			if (this.idleTimer) {
+				clearTimeout(this.idleTimer)
+				this.idleTimer = null
+			}
 		},
 
 		/* ==================== 解锁流程 ==================== */
@@ -664,6 +708,10 @@ export default {
 			this.trashPage = 1
 			await this.loadTrashPage()
 			this.openModal('trash')
+		},
+		/* 更新日志（未连接也可见，故不做 isAppOnline 校验） */
+		openChangelogModal() {
+			this.openModal('changelog')
 		},
 		/* 回收站翻页 / 改页大小 / 改排序（由 TrashModal 触发） */
 		onTrashPageChange(page) {

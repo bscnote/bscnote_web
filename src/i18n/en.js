@@ -14,7 +14,8 @@ export default {
     changePassword: 'Change Password',
     help: 'Help Center',
     github: 'GitHub',
-    x: 'X'
+    x: 'X',
+    changelog: 'Changelog'
   },
   connect: {
     title: 'Welcome to BscNote',
@@ -148,6 +149,17 @@ export default {
     switchToDark: 'Switch to dark mode',
     switchToLight: 'Switch to light mode'
   },
+  changelog: {
+    title: 'Changelog',
+    close: 'Close',
+    searchPlaceholder: 'Search version or changes…',
+    noResult: 'No matching entries',
+    entries: {
+      v106: {
+        '1': 'New - Auto-disconnect wallet after 20 minutes of inactivity'
+      }
+    }
+  },
   toast: {
     connected: 'Connection established',
     reconnected: 'Reconnected',
@@ -166,6 +178,7 @@ export default {
     unlockSuccess: 'Unlocked successfully',
     passwordCreated: 'Password set successfully',
     passwordWrong: 'Incorrect password',
-    readEnvelopeTimeout: 'Reading data timed out, please reconnect your wallet'
+    readEnvelopeTimeout: 'Reading data timed out, please reconnect your wallet',
+    idleTimeout: 'Disconnected due to inactivity'
   }
 }

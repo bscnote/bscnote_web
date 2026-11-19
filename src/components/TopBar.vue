@@ -65,6 +65,18 @@
 				</svg>
 				<span class="link-label">{{ $t('topbar.help') }}</span>
 			</a>
+			<!-- 更新日志（弹窗，未连接也可见） -->
+			<button class="link-btn" :data-tip="$t('topbar.changelog')" :aria-label="$t('topbar.changelog')"
+				@click="$emit('open-changelog')">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+					stroke-linejoin="round">
+					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+					<path d="M14 2v6h6"></path>
+					<line x1="16" y1="13" x2="8" y2="13"></line>
+					<line x1="16" y1="17" x2="8" y2="17"></line>
+				</svg>
+				<span class="link-label">{{ $t('topbar.changelog') }}</span>
+			</button>
 			<a class="link-btn icon-only" :href="links.github" target="_blank" rel="noopener noreferrer"
 				:data-tip="$t('topbar.github')" :aria-label="$t('topbar.github')">
 				<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -117,7 +129,7 @@ export default {
 			links: {
 				help: 'https://www.bscnote.com/help',
 				github: 'https://github.com/bscnote/bscnote_web/tree/master',
-				x: 'https://x.com/bscnote'
+				x: 'https://x.com/_codepp'
 			}
 		}
 	},
